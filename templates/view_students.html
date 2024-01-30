@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Students</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dist/css/output.css') }}">
+</head>
+<body class="font-sans bg-gray-100">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-blue-500 p-4 text-center">
+        <a href="{{ url_for('teacher_home') }}" class="text-white">Home</a>
+        <a href="{{ url_for('teacher_courses') }}" class="text-white ml-4">Courses</a>
+        <a href="{{ url_for('teacher_logout') }}" class="text-white ml-4">Logout</a>
+    </nav>
+
+    <!-- Content Section -->
+    <div class="container mx-auto p-8 text-center">
+        <h1 class="text-3xl font-bold mb-4">View Students</h1>
+        {% if course %}
+            <h2 class="text-xl font-bold mb-4">Course: {{ course.name }} - {{ course.department }} - {{ course.schedule }}</h2>
+        {% endif %}
+
+        <table class="border-collapse border border-gray-500 w-full">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-2">Student ID</th>
+                    <th class="p-2">Username</th>
+                    <th class="p-2">Email</th>
+                    <th class="p-2">Attendance Percentage</th>
+                    <th class="p-2">Attendance Records</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                    <tr>
+                        <td class="p-2">{{ student.id }}</td>
+                        <td class="p-2">{{ student.username }}</td>
+                        <td class="p-2">{{ student.email }}</td>
+                        <td class="p-2">
+                            {% set total_attendance = student.attendances|selectattr('course_id', 'equalto', course.id)|list|length %}
+                            {% set present_attendance = student.attendances|selectattr('course_id', 'equalto', course.id)|selectattr('status', 'equalto', 'present')|list|length %}
+                            {% set percentage = (present_attendance / total_attendance * 100) if total_attendance > 0 else 0 %}
+                            {{ percentage }}%
+                        </td>
+                        <td class="p-2">
+                            <ul>
+                                {% for record in student.attendances %}
+                                    {% if record.course_id == course.id %}
+                                        <li>{{ record.date }} - {{ record.status }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="{{ url_for('teacher_courses') }}" class="text-blue-500 mt-4 inline-block">Back to Courses</a>
+    </div>
+
+    <!-- Include Flowbite JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+</body>
+</html>
