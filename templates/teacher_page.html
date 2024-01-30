@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ current_user.username }} Account</title>
+
+    <style>
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h4, h1, h2, h3 {
+            text-align: center;
+            color: #333;
+            margin-top: 20px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        li {
+            background-color: #fff;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            margin-top: 20px;
+            color: #fff;
+            background-color: #4caf50;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        a:hover {
+            background-color: #45a049;
+        }
+
+        div {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <h1>Welcome, {{ current_user.username }}!</h1>
+
+    {% for course, students in enrolled_students.items() %}
+        <h2>{{ course.name }}</h2>
+        <h4>Enrolled Students:</h4>
+        <ul>
+            {% for student in students %}
+                <li>{{ student.username }} - {{ student.email }}</li>
+            {% endfor %}
+
+
+
+        <a href="{{ url_for('mark_attendance', course_id=course.id, student_id=students[0].id) }}">Mark Attendance</a>
+    {% endfor %}
+
+    <div><a href="{{ url_for('logout') }}">Logout</a></div>
+
+</body>
+
+</html>

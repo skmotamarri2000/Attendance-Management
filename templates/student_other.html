@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Other Links</title>
+
+    <style>
+
+            body {
+                font-family: 'Arial', sans-serif;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+            }
+
+            h1 {
+                text-align: center;
+                color: #333;
+                margin-top: 20px;
+            }
+
+            a {
+                display: block;
+                text-align: center;
+                padding: 10px;
+                margin: 10px;
+                color: #333;
+                background-color: #fff;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                text-decoration: none;
+                transition: background-color 0.3s;
+            }
+
+            a:hover {
+                background-color: #e0e0e0;
+            }
+
+            div {
+                text-align: center;
+            }
+
+    </style>
+</head>
+<body>
+    <h1>Other Links for Students</h1>
+
+    <a href="{{ url_for('course_registration') }}">Course Registration</a>
+
+    <div><a href="{{ url_for('student_home') }}">Back to Home Page</a></div>
+</body>
+
+</html>
