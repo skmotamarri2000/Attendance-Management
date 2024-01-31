@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dist/css/output.css') }}">
+</head>
+<body class="font-sans bg-gray-100">
+
+    <nav class="bg-blue-500 p-4 text-center">
+        <a href="{{ url_for('teacher_home') }}" class="text-white">Home</a>
+        <a href="{{ url_for('teacher_courses') }}" class="text-white ml-4">Courses</a>
+        <a href="{{ url_for('teacher_logout') }}" class="text-white ml-4">Logout</a>
+    </nav>
+
+    <div class="container mx-auto p-8 text-center">
+        <h1 class="text-3xl font-bold mb-4">{{ course.name }} - {{ course.department }} - {{ course.schedule }}</h1>
+        <ul class="list-disc list-inside">
+            <li><a href="{{ url_for('mark_attendance', course_id=course.id) }}" class="text-blue-500">Mark Attendance</a></li>
+            <li><a href="{{ url_for('view_students', course_id=course.id) }}" class="text-blue-500">View Students</a></li>
+        </ul>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+</body>
+</html>

@@ -138,7 +138,7 @@ def login():
             if user.account_type == 'student':
                 return redirect(url_for('student_home'))
             elif user.account_type == 'teacher':
-                return redirect(url_for('teacher_page'))
+                return redirect(url_for('teacher_home'))
         else:
             flash('Login Unsuccessful. Please check username and password', 'danger')
     return render_template('login.html', form=form)
@@ -210,12 +210,60 @@ def student_other():
 
     return render_template('student_other.html')
 
+#---------------------------------------------------------------Student attendance---------------------------
+@app.route("/view_student_attendance", methods=['GET'])
+@login_required
+def view_student_attendance():
+    if current_user.account_type != 'student':
+        flash('Access Denied. You are not a student.', 'danger')
+        return redirect(url_for('home'))
+
+    # Fetching attendance records for the current student
+    attendance_records = current_user.attendances
+
+    # Calculate the attendance percentage
+    total_records = len(attendance_records)
+    present_records = sum(1 for record in attendance_records if record.status == 'present')
+    attendance_percentage = (present_records / total_records) * 100 if total_records > 0 else 0
+
+    return render_template('view_student_attendance.html', attendance_records=attendance_records, attendance_percentage=attendance_percentage)
 
 # ---------------------------------------------------------------Teacher Route ---------------------------------------------------------------
 
-@app.route("/teacher_page", methods=['GET'])
+@app.route("/view_students/<int:course_id>", methods=['GET'])
 @login_required
-def teacher_page():
+def view_students(course_id):
+    if current_user.account_type != 'teacher':
+        flash('Access Denied. You are not a teacher.', 'danger')
+        return redirect(url_for('home'))
+
+    course = Course.query.get(course_id)
+
+    if not course or course.professor != current_user:
+        flash('Invalid request.', 'danger')
+        return redirect(url_for('home'))
+
+    # Fetching list of students for the given course
+    students = course.students
+
+    return render_template('view_students.html', course=course, students=students)
+
+# ---------------------------------------------------------------Teacher Route ---------------------------------------------------------------
+
+# Add new routes for the teacher's options
+@app.route("/teacher_home",methods=['GET', 'POST'])
+@login_required
+def teacher_home():
+    if current_user.account_type != 'teacher':
+        flash('Access Denied. You are not a teacher.', 'danger')
+        return redirect(url_for('home'))
+
+    return render_template('teacher_home.html')
+
+
+@app.route("/teacher_courses",methods=['GET', 'POST'])
+@login_required
+def teacher_courses():
     if current_user.account_type != 'teacher':
         flash('Access Denied. You are not a teacher.', 'danger')
         return redirect(url_for('home'))
@@ -223,55 +271,64 @@ def teacher_page():
     # Fetch the courses taught by the current teacher
     courses_taught = Course.query.filter_by(professor=current_user).all()
 
-    # Fetch enrolled students for each course
-    enrolled_students = {}
-    for course in courses_taught:
-        students = course.students
-        enrolled_students[course] = students
-
-    return render_template('teacher_page.html', enrolled_students=enrolled_students)
+    return render_template('teacher_courses.html', courses_taught=courses_taught)
 
 
+@app.route("/teacher_logout",methods=['GET', 'POST'])
+@login_required
+def teacher_logout():
+    logout_user()
+    flash('You have been logged out.', 'success')
+    return redirect(url_for('home'))
 
+
+@app.route("/course_page/<int:course_id>")
+@login_required
+def course_page(course_id):
+    course = Course.query.get(course_id)
+
+    if not course or course.professor != current_user:
+        flash('Invalid request.', 'danger')
+        return redirect(url_for('home'))
+
+    return render_template('course_page.html', course=course)
 
 #---------------------------------------------------------Teacher Marking attendance ---------------------------------------------------------------------------
 
-@app.route("/mark_attendance/<int:course_id>/<int:student_id>", methods=['GET', 'POST'])
+@app.route("/mark_attendance/<int:course_id>", methods=['GET', 'POST'])
 @login_required
-def mark_attendance(course_id, student_id):
+def mark_attendance(course_id):
     if current_user.account_type != 'teacher':
         flash('Access Denied. You are not a teacher.', 'danger')
         return redirect(url_for('home'))
 
     course = Course.query.get(course_id)
-    student = User.query.get(student_id)
 
-    if not course or not student or course.professor != current_user:
+    if not course or course.professor != current_user:
         flash('Invalid request.', 'danger')
         return redirect(url_for('home'))
 
     form = AttendanceForm()
 
     if form.validate_on_submit():
-        # Checking if attendance for the given date already exists
-        try:
-            existing_attendance = Attendance.query.filter_by(date=form.date.data, student=student, course=course).one()
-            # If the attendance exists, update the status
-            existing_attendance.status = 'present' if request.form.get('status') == 'present' else 'absent'
-            db.session.commit()
-            flash(f'Attendance for {student.username} on {form.date.data} updated successfully.', 'success')
-        except NoResultFound:
-            # If attendance  not exist, creating new record
-            status = 'present' if request.form.get('status') == 'present' else 'absent'
-            attendance = Attendance(date=form.date.data, student=student, course=course, status=status)
-            db.session.add(attendance)
-            db.session.commit()
-            flash(f'Attendance for {student.username} on {form.date.data} marked successfully.', 'success')
+        # Assuming you want to mark attendance for all students in the course
+        for student in course.students:
+            try:
+                existing_attendance = Attendance.query.filter_by(date=form.date.data, student=student, course=course).one()
+                existing_attendance.status = 'present' if request.form.get(f'status_{student.id}') == 'present' else 'absent'
+                db.session.commit()
+                flash(f'Attendance for {student.username} on {form.date.data} updated successfully.', 'success')
+            except NoResultFound:
+                status = 'present' if request.form.get(f'status_{student.id}') == 'present' else 'absent'
+                attendance = Attendance(date=form.date.data, student=student, course=course, status=status)
+                db.session.add(attendance)
+                db.session.commit()
+                flash(f'Attendance for {student.username} on {form.date.data} marked successfully.', 'success')
 
-    # Fetching  list of students for the given course
+    # Fetching list of students for the given course
     students = course.students
 
-    return render_template('mark_attendance.html', form=form, course=course, student=student, students=students)
+    return render_template('mark_attendance.html', form=form, course=course, students=students)
 
 
 #------------------------------------------------------------------------------------------------------------------------------------
@@ -299,6 +356,9 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'success')
     return redirect(url_for('home'))
+
+
+
 
 
 if __name__ == '__main__':

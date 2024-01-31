@@ -73,24 +73,36 @@
     <h1>Attendance Records</h1>
 
     {% if attendance_records %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Course</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in attendance_records %}
+        {% set attendance_by_course = attendance_records|groupby('course.id') %}
+
+        {% for course_id, records in attendance_by_course %}
+            {% set course = records[0].course %}
+
+            <h2>{{ course.name }} - Attendance Percentage</h2>
+
+            <table>
+                <thead>
                     <tr>
-                        <td>{{ record.date }}</td>
-                        <td>{{ record.status }}</td>
-                        <td>{{ record.course.name }}</td>
+                        <th>Date</th>
+                        <th>Status</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.status }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% set total_present = records|selectattr('status', 'equalto', 'present')|list|length %}
+            {% set total_records = records|list|length %}
+            {% set attendance_percentage = (total_present / total_records) * 100 if total_records > 0 else 0 %}
+
+            <p>Total Attendance Percentage for {{ course.name }}: {{ attendance_percentage }}%</p>
+        {% endfor %}
     {% else %}
         <p>No attendance records available.</p>
     {% endif %}
